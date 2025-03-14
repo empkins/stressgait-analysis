@@ -7,7 +7,6 @@ from tpcp import Dataset
 
 
 class StressGaitDataset(Dataset):
-
     PARTICIPANTS_EXCLUDED: ClassVar[Sequence[str]] = [
         "VP_03",
         "VP_04",
@@ -102,13 +101,9 @@ class StressGaitDataset(Dataset):
         return self._load_saliva("amylase")
 
     def _load_saliva(self, saliva_type: str) -> pd.DataFrame:
-        file_path = self.base_path.joinpath(
-            f"saliva/processed/stressgait_{saliva_type}_samples.csv"
-        )
+        file_path = self.base_path.joinpath(f"saliva/processed/stressgait_{saliva_type}_samples.csv")
         data = pd.read_csv(file_path)
-        data = data.rename(columns={"subject": "participant"}).set_index(
-            ["participant", "sample"]
-        )
+        data = data.rename(columns={"subject": "participant"}).set_index(["participant", "sample"])
         data = data.join(self.condition)
         data = data.reset_index()
         data = data.rename(columns={"participant": "subject"})
@@ -125,13 +120,9 @@ class StressGaitDataset(Dataset):
         return self._load_saliva_features("amylase")
 
     def _load_saliva_features(self, saliva_type: str) -> pd.DataFrame:
-        file_path = self.base_path.joinpath(
-            f"saliva/processed/stressgait_{saliva_type}_features.csv"
-        )
+        file_path = self.base_path.joinpath(f"saliva/processed/stressgait_{saliva_type}_features.csv")
         data = pd.read_csv(file_path)
-        data = data.rename(columns={"subject": "participant"}).set_index(
-            ["participant", "saliva_feature"]
-        )
+        data = data.rename(columns={"subject": "participant"}).set_index(["participant", "saliva_feature"])
         data = data.join(self.condition)
         data = data.reset_index()
         data = data.rename(columns={"participant": "subject"})
