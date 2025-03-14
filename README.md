@@ -65,6 +65,9 @@ the following structure:
 Hereby, the `deploy_type` can be used to specify different locations of datasets, e.g., `local`, 
 `external_drive`, or `remote`.
 
+**Note:** The `config.json` is ignored by git and should not be committed to the repository since it depends on the 
+local setup.
+
 Afterwards, the path to the dataset can be loaded in the notebooks by specifying the `deploy_type`.
 
 
