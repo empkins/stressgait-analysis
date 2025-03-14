@@ -64,7 +64,7 @@ wheels = [
 [[package]]
 name = "biopsykit"
 version = "0.12.2"
-source = { editable = "../../BioPsyKit/BioPsyKit" }
+source = { git = "https://github.com/mad-lab-fau/BioPsyKit.git?branch=main#b71eb6033fe5dd0c0a725d4455aaeff696f05271" }
 dependencies = [
     { name = "bioread" },
     { name = "fau-colors" },
@@ -86,34 +86,6 @@ dependencies = [
     { name = "ts2vg" },
     { name = "xlrd" },
     { name = "xlsxwriter" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "bioread", specifier = ">=3,<4" },
-    { name = "fau-colors", specifier = ">=1.1,<2.0" },
-    { name = "ipympl", marker = "extra == 'jupyter'", specifier = ">=0.9,<0.10" },
-    { name = "ipython", marker = "extra == 'jupyter'", specifier = ">=7,<8" },
-    { name = "ipywidgets", marker = "extra == 'jupyter'", specifier = ">=8,<9" },
-    { name = "joblib", specifier = ">=1,<2" },
-    { name = "matplotlib", specifier = ">=3.9,<4.0" },
-    { name = "mne", marker = "extra == 'mne'", specifier = ">=1.2.1,<2.0.0" },
-    { name = "neurokit2", specifier = ">=0,<1" },
-    { name = "nilspodlib", specifier = ">=3.4.1" },
-    { name = "numpy", specifier = ">=1,<2" },
-    { name = "openpyxl", specifier = ">=3,<4" },
-    { name = "pandas", specifier = ">=2,<3" },
-    { name = "pingouin", specifier = ">=0.5.2,<0.6.0" },
-    { name = "scikit-learn", specifier = ">=1.0,<2.0" },
-    { name = "scipy", specifier = ">=1,<2" },
-    { name = "seaborn", specifier = ">=0,<1" },
-    { name = "statannotations", specifier = ">=0.7.1,<0.8.0" },
-    { name = "statsmodels", specifier = ">=0,<1" },
-    { name = "tpcp", specifier = ">=1" },
-    { name = "tqdm", specifier = ">=4,<5" },
-    { name = "ts2vg", specifier = ">=1.2.4,<2.0.0" },
-    { name = "xlrd", specifier = ">=2,<3" },
-    { name = "xlsxwriter", specifier = ">=1,<2" },
 ]
 
 [[package]]
@@ -1649,7 +1621,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "biopsykit", editable = "../../BioPsyKit/BioPsyKit" },
+    { name = "biopsykit", git = "https://github.com/mad-lab-fau/BioPsyKit.git?branch=main" },
     { name = "pandas", specifier = ">=2.2.3,<3" },
 ]
 

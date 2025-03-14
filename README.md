@@ -20,8 +20,6 @@ stressgait_analysis
 
 ## Usage
 
-This project was created using the mad-cookiecutter ds-base template.
-
 To work with the project you need to install:
 
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
@@ -44,6 +42,33 @@ And create a new experiment using:
 poe experiment experiment_name
 ```
 
+## Get the Dataset
+
+The dataset is not included in this repository and must be downloaded separately (e.g., from the FAUDataCloud).
+
+The dataset can be placed anywhere on your system, you just need to specify the path in a config file.
+
+To do so, create a new file called `config.json` in the `experiments` folder of this repository. The file should follow
+the following structure:
+
+```json
+{
+    "<deploy_type_1>": {
+        "base_path": "path-to-dataset"
+    },
+    "deploy_type_2": {
+        "base_path": ""
+    }
+}
+```
+
+Hereby, the `deploy_type` can be used to specify different locations of datasets, e.g., `local`, 
+`external_drive`, or `remote`.
+
+Afterwards, the path to the dataset can be loaded in the notebooks by specifying the `deploy_type`.
+
+
+## Development Information
 
 ### Dependency management
 
