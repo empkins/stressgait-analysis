@@ -1,4 +1,5 @@
-from typing import Sequence, ClassVar
+from collections.abc import Sequence
+from typing import ClassVar
 
 import pandas as pd
 from biopsykit.utils._types_internal import path_t
@@ -83,11 +84,10 @@ class StressGaitDataset(Dataset):
         return data
 
     @property
-    def condition(self):
+    def condition(self) -> pd.DataFrame:
         if self.coarse_condition:
             return self.condition_coarse
-        else:
-            return self.condition_fine
+        return self.condition_fine
 
     @property
     def sample_times(self) -> Sequence[int]:

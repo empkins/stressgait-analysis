@@ -1,7 +1,9 @@
+"""StressGait Analysis package."""
+
 __version__ = "0.1.0"
 
 
-def conf_rel_path():
+def conf_rel_path() -> None:
     """Configure relative path imports for the experiments folder."""
     import sys
     from pathlib import Path
