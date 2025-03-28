@@ -5,7 +5,7 @@ from scipy.interpolate import interp1d
 
 from scipy.signal import find_peaks
 def compute_HS(keypoints):
-    dist = keypoints.left_ankle_x - (keypoints.left_hip_x+ keypoints.right_hip_x)/2
+    dist = keypoints.left_ankle_x - keypoints.left_hip_x
     hs_idx, _ = find_peaks(dist, width=15, prominence=50)
     hs_v = keypoints.iloc[hs_idx].index
     return np.array(hs_v)

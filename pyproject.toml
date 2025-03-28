@@ -22,7 +22,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-biopsykit = { path = "/Users/richer/Documents/PhD/Code_Repositories/BioPsyKit/BioPsyKit", editable = true }
+biopsykit = { path = "/home/rzlin/ys64ofuj/BioPsyKit/", editable = true }
 
 [build-system]
 requires = ["hatchling"]

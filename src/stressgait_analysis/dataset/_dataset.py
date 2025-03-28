@@ -345,3 +345,16 @@ class StressGaitDataset(Dataset):
         flat_kinematics = kinematics.reset_index()
         filtered_kinematics = flat_kinematics.merge(subset, on=subset.columns.tolist(), how='inner')
         return filtered_kinematics.set_index(['participant', 'condition', 'bout', 'speed', 'cycle_idx', 'percentage_of_stride'])
+
+    @property
+    def kinematics_body26(self):
+        try:
+            kinematics = pd.read_pickle(self.base_path.joinpath('kinematics/kinematics_body26.pkl'))
+        except:
+            raise FileNotFoundError('kinematics.pkl not found, please run the file "Gait_kinematics.py" first')
+
+        subset = self.index
+        flat_kinematics = kinematics.reset_index()
+        filtered_kinematics = flat_kinematics.merge(subset, on=subset.columns.tolist(), how='inner')
+        return filtered_kinematics.set_index(
+            ['participant', 'condition', 'bout', 'speed', 'cycle_idx', 'percentage_of_stride'])

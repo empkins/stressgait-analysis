@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.9, <3.13"
 resolution-markers = [
     "python_full_version >= '3.12' and implementation_name == 'pypy' and sys_platform == 'darwin'",
@@ -64,7 +65,7 @@ wheels = [
 [[package]]
 name = "biopsykit"
 version = "0.12.2"
-source = { editable = "../../BioPsyKit/BioPsyKit" }
+source = { editable = "../BioPsyKit" }
 dependencies = [
     { name = "bioread" },
     { name = "fau-colors" },
@@ -91,29 +92,51 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "bioread", specifier = ">=3,<4" },
-    { name = "fau-colors", specifier = ">=1.1,<2.0" },
+    { name = "fau-colors", specifier = "~=1.1" },
     { name = "ipympl", marker = "extra == 'jupyter'", specifier = ">=0.9,<0.10" },
     { name = "ipython", marker = "extra == 'jupyter'", specifier = ">=7,<8" },
     { name = "ipywidgets", marker = "extra == 'jupyter'", specifier = ">=8,<9" },
     { name = "joblib", specifier = ">=1,<2" },
-    { name = "matplotlib", specifier = ">=3.9,<4.0" },
-    { name = "mne", marker = "extra == 'mne'", specifier = ">=1.2.1,<2.0.0" },
+    { name = "matplotlib", specifier = "~=3.9" },
+    { name = "mne", marker = "extra == 'mne'", specifier = ">=1.2.1,<2" },
     { name = "neurokit2", specifier = ">=0,<1" },
     { name = "nilspodlib", specifier = ">=3.4.1" },
     { name = "numpy", specifier = ">=1,<2" },
     { name = "openpyxl", specifier = ">=3,<4" },
     { name = "pandas", specifier = ">=2,<3" },
-    { name = "pingouin", specifier = ">=0.5.2,<0.6.0" },
-    { name = "scikit-learn", specifier = ">=1.0,<2.0" },
+    { name = "pingouin", specifier = ">=0.5.2,<0.6" },
+    { name = "scikit-learn", specifier = "~=1.0" },
     { name = "scipy", specifier = ">=1,<2" },
     { name = "seaborn", specifier = ">=0,<1" },
-    { name = "statannotations", specifier = ">=0.7.1,<0.8.0" },
+    { name = "statannotations", specifier = ">=0.7.1,<0.8" },
     { name = "statsmodels", specifier = ">=0,<1" },
     { name = "tpcp", specifier = ">=1" },
     { name = "tqdm", specifier = ">=4,<5" },
-    { name = "ts2vg", specifier = ">=1.2.4,<2.0.0" },
+    { name = "ts2vg", specifier = ">=1.2.4,<2" },
     { name = "xlrd", specifier = ">=2,<3" },
     { name = "xlsxwriter", specifier = ">=1,<2" },
+]
+provides-extras = ["mne", "jupyter"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "black", extras = ["jupyter", "d"], specifier = ">=22,<23" },
+    { name = "coverage-badge", specifier = ">=1.0.1,<2" },
+    { name = "ipykernel", specifier = ">=6,<7" },
+    { name = "memory-profiler", specifier = ">=0.57.0,<0.58" },
+    { name = "nbsphinx", specifier = ">=0.8.7,<0.9" },
+    { name = "numpydoc", specifier = ">=1,<2" },
+    { name = "poethepoet", specifier = ">=0.10.0,<0.11" },
+    { name = "pydata-sphinx-theme", specifier = ">=0.6.2,<0.7" },
+    { name = "pytest", specifier = ">=6,<7" },
+    { name = "pytest-cov", specifier = ">=2,<3" },
+    { name = "recommonmark", specifier = ">=0.6.0,<0.7" },
+    { name = "ruff", specifier = ">=0,<1" },
+    { name = "sphinx", specifier = ">=5,<6" },
+    { name = "sphinx-copybutton", specifier = ">=0.4.0,<0.5" },
+    { name = "sphinx-gallery", specifier = ">=0.10.0,<0.11" },
+    { name = "sphinx-issues", specifier = ">=1.2.0,<2" },
+    { name = "toml", specifier = ">=0.10.1,<0.11" },
 ]
 
 [[package]]
@@ -1649,7 +1672,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "biopsykit", editable = "../../BioPsyKit/BioPsyKit" },
+    { name = "biopsykit", editable = "../BioPsyKit" },
     { name = "pandas", specifier = ">=2.2.3,<3" },
 ]
 
