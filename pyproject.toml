@@ -29,6 +29,34 @@ biopsykit = { git = "https://github.com/mad-lab-fau/BioPsyKit.git", branch = "ma
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+
+[tool.black]
+line-length = 120
+target-version = ['py310']
+exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | docs
+    | build
+    | dist
+    | \.virtual_documents
+  )/
+)
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 120
+skip_gitignore = true
+
 [tool.poe.tasks]
 _format = "ruff format ."
 _auto_fix = "ruff check . --fix-only --show-fixes --exit-zero"

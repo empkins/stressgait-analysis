@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from typing import ClassVar
 
 import pandas as pd
+from biopsykit.io import load_questionnaire_data
 from biopsykit.utils._types_internal import path_t
 from tpcp import Dataset
 
@@ -18,6 +19,8 @@ class StressGaitDataset(Dataset):
     PARTICIPANTS_NO_SALIVA: ClassVar[Sequence[str]] = ["VP_04", "VP_48"]
 
     PARTICIPANTS_HIGH_S0_CORTISOL: ClassVar[Sequence[str]] = ["VP_39"]
+
+    PARTICIPANTS_NO_S0: ClassVar[Sequence[str]] = ["VP_10"]
 
     SAMPLE_TIMES: ClassVar[Sequence[int]] = [0, 30, 34, 38, 48, 58]
 
@@ -59,6 +62,7 @@ class StressGaitDataset(Dataset):
         data_to_exclude.extend(self.PARTICIPANTS_EXCLUDED)
         data_to_exclude.extend(self.PARTICIPANTS_NO_SALIVA)
         data_to_exclude.extend(self.PARTICIPANTS_HIGH_S0_CORTISOL)
+        data_to_exclude.extend(self.PARTICIPANTS_NO_S0)
         data_to_exclude = sorted(set(data_to_exclude))
         return data_to_exclude
 
@@ -127,5 +131,15 @@ class StressGaitDataset(Dataset):
         data = data.reset_index()
         data = data.rename(columns={"participant": "subject"})
         data = data.set_index(["subject", "condition", "saliva_feature"])
+
+        return data.loc[self.index["participant"].unique()]
+
+    @property
+    def questionnaire(self):
+        file_path = self.base_path.joinpath("questionnaires/cleaned/stressgait_questionnaires.csv")
+        data = load_questionnaire_data(file_path, subject_col="participant").reset_index()
+        data = data.rename(columns={"subject": "participant"})
+        data = data.drop(columns="condition").set_index("participant")
+        data = data.join(self.condition).set_index("condition", append=True)
 
         return data.loc[self.index["participant"].unique()]

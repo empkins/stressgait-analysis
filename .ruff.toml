@@ -1,5 +1,5 @@
 line-length = 120
-target-version = "py39"
+target-version = "py310"
 
 
 exclude = [
@@ -104,8 +104,6 @@ ignore = [
     "PD013",
     # No Any annotations
     "ANN401",
-    # Self annotation
-    "ANN101",
     # To many arguments
     "PLR0913",
     # Class attribute shadows builtin
