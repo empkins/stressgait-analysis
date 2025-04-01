@@ -135,7 +135,7 @@ class StressGaitDataset(Dataset):
         return data.loc[self.index["participant"].unique()]
 
     @property
-    def questionnaire(self):
+    def questionnaire(self) -> pd.DataFrame:
         file_path = self.base_path.joinpath("questionnaires/cleaned/stressgait_questionnaires.csv")
         data = load_questionnaire_data(file_path, subject_col="participant").reset_index()
         data = data.rename(columns={"subject": "participant"})
