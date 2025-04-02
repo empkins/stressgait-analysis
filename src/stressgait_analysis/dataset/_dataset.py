@@ -24,6 +24,8 @@ class StressGaitDataset(Dataset):
 
     SAMPLE_TIMES: ClassVar[Sequence[int]] = [0, 30, 34, 38, 48, 58]
 
+    CONDITION_MAPPING: ClassVar[dict[str, str]] = {"control": "Control", "omc": "OMC"}
+
     def __init__(
         self,
         base_path: path_t,
@@ -54,6 +56,7 @@ class StressGaitDataset(Dataset):
             index["condition"] = index["condition"].str.split("_").str[0]
 
         index = index.reset_index()
+        index = index.replace(self.CONDITION_MAPPING)
 
         return index
 
@@ -76,7 +79,7 @@ class StressGaitDataset(Dataset):
         data = data[["participant", "condition"]]
         data = data.set_index(["participant"])
 
-        return data
+        return data.rename(index=self.CONDITION_MAPPING)
 
     @property
     def condition_coarse(self) -> pd.DataFrame:
@@ -84,7 +87,7 @@ class StressGaitDataset(Dataset):
         data = data[["participant", "condition"]]
         data["condition"] = data["condition"].str.split("_").str[0]
         data = data.set_index(["participant"])
-        return data
+        return data.replace(self.CONDITION_MAPPING)
 
     @property
     def condition(self) -> pd.DataFrame:
