@@ -24,6 +24,8 @@ class StressGaitDataset(Dataset):
 
     PARTICIPANTS_HIGH_S0_CORTISOL: ClassVar[Sequence[str]] = ["VP_39"]
 
+    PARTICIPANTS_NO_S0: ClassVar[Sequence[str]] = ["VP_10"]
+
     SAMPLE_TIMES: ClassVar[Sequence[int]] = [0, 30, 34, 38, 48, 58]
 
     PARTICIPANTS_SPEED_INVERSE = ["VP11", "VP12", "VP15"]
@@ -102,6 +104,7 @@ class StressGaitDataset(Dataset):
         data_to_exclude.extend(self.PARTICIPANTS_EXCLUDED)
         data_to_exclude.extend(self.PARTICIPANTS_NO_SALIVA)
         data_to_exclude.extend(self.PARTICIPANTS_HIGH_S0_CORTISOL)
+        data_to_exclude.extend(self.PARTICIPANTS_NO_S0)
         data_to_exclude = sorted(set(data_to_exclude))
         return data_to_exclude
 
@@ -337,7 +340,9 @@ class StressGaitDataset(Dataset):
     @property
     def kinematics(self):
         try:
-            kinematics = pd.read_pickle(self.base_path.joinpath('kinematics/kinematics.pkl'))
+            kinematics = pd.read_csv(self.base_path.joinpath('kinematics/kinematics.csv'), index_col=0)
+            if 'bout' in kinematics.columns:
+                kinematics['bout'] = kinematics['bout'].astype(str)
         except:
             raise FileNotFoundError('kinematics.pkl not found, please run the file "Gait_kinematics.py" first')
 
@@ -347,14 +352,16 @@ class StressGaitDataset(Dataset):
         return filtered_kinematics.set_index(['participant', 'condition', 'bout', 'speed', 'cycle_idx', 'percentage_of_stride'])
 
     @property
-    def kinematics_body26(self):
+    def stride_times(self):
         try:
-            kinematics = pd.read_pickle(self.base_path.joinpath('kinematics/kinematics_body26.pkl'))
+            stride_times = pd.read_csv(self.base_path.joinpath('kinematics/stride_times.csv'), index_col=0)
+            if 'bout' in stride_times.columns:
+                stride_times['bout'] = stride_times['bout'].astype(str)
         except:
-            raise FileNotFoundError('kinematics.pkl not found, please run the file "Gait_kinematics.py" first')
+            raise FileNotFoundError('stride_times.csv not found, please run the file "Gait_spatiotemporal_features.py" first')
 
         subset = self.index
-        flat_kinematics = kinematics.reset_index()
-        filtered_kinematics = flat_kinematics.merge(subset, on=subset.columns.tolist(), how='inner')
-        return filtered_kinematics.set_index(
-            ['participant', 'condition', 'bout', 'speed', 'cycle_idx', 'percentage_of_stride'])
+        flat_kinematics = stride_times.reset_index()
+        filtered_stride_times = flat_kinematics.merge(subset, on=subset.columns.tolist(), how='inner')
+        return filtered_stride_times.set_index(
+            ['participant', 'condition', 'bout', 'speed', 'stride_idx'])

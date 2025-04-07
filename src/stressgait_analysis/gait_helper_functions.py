@@ -103,8 +103,8 @@ def leg2d(mocap_f):
 
 
 def compute_arm_kinematics(keypoints):
-        u_x = keypoints['left_elbow_x'] - keypoints['left_shoulder_x']
-        u_y = keypoints['left_elbow_y'] - keypoints['left_shoulder_y']
+        u_x = keypoints['left_shoulder_x']- keypoints['left_elbow_x']
+        u_y = keypoints['left_shoulder_y'] - keypoints['left_elbow_y']
         v_x = keypoints['left_wrist_x'] - keypoints['left_elbow_x']
         v_y = keypoints['left_wrist_y'] - keypoints['left_elbow_y']
 
@@ -117,13 +117,13 @@ def compute_arm_kinematics(keypoints):
         cos_theta = dot_product / (magnitude_u * magnitude_v)
 
         # Clip values to [-1, 1] to avoid numerical errors
-        cos_theta = np.clip(cos_theta, -1.0, 1.0)
+        #cos_theta = np.clip(cos_theta, -1.0, 1.0)
 
         # Compute angles in degrees
         elbow_flexion_angles = np.degrees(np.arccos(cos_theta))
 
-        u_x = keypoints['left_wrist_x'] - keypoints['left_shoulder_x']
-        u_y = keypoints['left_wrist_y'] - keypoints['left_shoulder_y']
+        u_x = keypoints['left_shoulder_x'] - keypoints['left_wrist_x']
+        u_y = keypoints['left_shoulder_y'] - keypoints['left_wrist_y']
 
         # Vertical reference vector (unit vector pointing straight up)
         v_x = 0
@@ -138,13 +138,15 @@ def compute_arm_kinematics(keypoints):
         cos_theta = dot_product / (magnitude_u * magnitude_v)
 
         # Clip values to [-1, 1] to avoid numerical errors
-        cos_theta = np.clip(cos_theta, -1.0, 1.0)
+        ##cos_theta = np.clip(cos_theta, -1.0, 1.0)
 
         # Compute angle in degrees
         arm_swing_angles = np.degrees(np.arccos(cos_theta))
 
-        arm_angles = pd.DataFrame([elbow_flexion_angles, arm_swing_angles]).T
-        arm_angles.columns = ['elbow_flexion_angles', 'arm_swing_angles']
+        arm_swing_amplitude = keypoints['left_wrist_x'] - keypoints['left_shoulder_x']
+
+        arm_angles = pd.DataFrame([elbow_flexion_angles, arm_swing_angles, arm_swing_amplitude]).T
+        arm_angles.columns = ['elbow_angle', 'shoulder_angle', 'arm_swing']
         arm_angles.index = keypoints.index
         return arm_angles
 
