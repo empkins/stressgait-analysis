@@ -260,7 +260,7 @@ class StressGaitDataset(Dataset):
         traj.columns = column_names
         traj['time'] = traj.index / 50
         traj.set_index('time', inplace=True)
-
+       # print(traj.isnull().values.any())
 
         #interpolate missing NaNs
         traj_interpolated = traj.interpolate(axis=0, limit=4)
