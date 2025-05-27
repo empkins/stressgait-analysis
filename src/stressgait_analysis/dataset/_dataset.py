@@ -1,11 +1,14 @@
-from collections.abc import Sequence
-from typing import ClassVar
+from typing import Sequence, ClassVar
 
 import pandas as pd
 from biopsykit.io import load_questionnaire_data
 from biopsykit.utils._types_internal import path_t
+from pandas import DataFrame
 from tpcp import Dataset
-
+import numpy as np
+from scipy import signal
+import json
+import os
 
 class StressGaitDataset(Dataset):
     PARTICIPANTS_EXCLUDED: ClassVar[Sequence[str]] = [
@@ -26,6 +29,23 @@ class StressGaitDataset(Dataset):
 
     CONDITION_MAPPING: ClassVar[dict[str, str]] = {"control": "Control", "omc": "OMC"}
 
+    PARTICIPANTS_SPEED_INVERSE = ["VP11", "VP12", "VP15"]
+
+    GRF_DICT = { 'ground_force1_vx': 'GRF_x_1', 'ground_force1_vy': 'GRF_y_1', 'ground_force1_vz': 'GRF_z_1',
+                 'ground_force1_px': 'COP_x_1', 'ground_force1_py': 'COP_y_1', 'ground_force1_pz': 'COP_z_1',
+    'ground_torque1_x': 'M_x_1', 'ground_torque1_y': 'M_y_1', 'ground_torque1_z': 'M_z_1',
+    'ground_force2_vx': 'GRF_x_2', 'ground_force2_vy': 'GRF_y_2', 'ground_force2_vz': 'GRF_z_2',
+    'ground_force2_px': 'COP_x_2', 'ground_force2_py': 'COP_y_2', 'ground_force2_pz': 'COP_z_2',
+    'ground_torque2_x': 'M_x_2', 'ground_torque2_y': 'M_y_2', 'ground_torque2_z': 'M_z_2'}
+
+    script_dir = os.path.dirname(__file__)
+    json_path = os.path.join(script_dir, "model_keypoints.json")
+
+    # Open and load the JSON file
+    with open(json_path, "r") as f:
+        MODEL_KEYPOINTS = json.load(f)
+
+
     def __init__(
         self,
         base_path: path_t,
@@ -34,12 +54,18 @@ class StressGaitDataset(Dataset):
         *,
         coarse_condition: bool = False,
         exclude_missing_data: bool = True,
+        specify_bouts: bool = False,
         use_cache: bool = True,
+        gait_data_path = None,
+        specify_speed = False
     ) -> None:
         self.base_path = base_path
         self.coarse_condition = coarse_condition
         self.exclude_missing_data = exclude_missing_data
         self.use_cache = use_cache
+        self.specify_bouts = specify_bouts
+        self.specify_speed = specify_speed
+        self.gait_data_path = gait_data_path
         super().__init__(groupby_cols=groupby_cols, subset_index=subset_index)
 
     def create_index(self) -> pd.DataFrame:
@@ -55,8 +81,23 @@ class StressGaitDataset(Dataset):
         if self.coarse_condition:
             index["condition"] = index["condition"].str.split("_").str[0]
 
+
+
         index = index.reset_index()
         index = index.replace(self.CONDITION_MAPPING)
+
+        if self.specify_bouts:
+            columns = index.columns
+            index = pd.DataFrame(np.repeat(index.values, 2, axis=0))
+            index.columns = columns
+            index['bout'] = '1'
+            index.loc[1::2, 'bout'] = '2'
+
+        if self.specify_speed:
+            normal = ~index["participant"].isin(self.PARTICIPANTS_SPEED_INVERSE)
+            index.loc[normal, "speed"] = index.loc[normal, "bout"].apply(lambda x: "slow" if x == "1" else "fast")
+            inverse = index["participant"].isin(self.PARTICIPANTS_SPEED_INVERSE)
+            index.loc[inverse, "speed"] = index.loc[inverse, "bout"].apply(lambda x: "fast" if x == "1" else "slow")
 
         return index
 
@@ -146,3 +187,184 @@ class StressGaitDataset(Dataset):
         data = data.join(self.condition).set_index("condition", append=True)
 
         return data.loc[self.index["participant"].unique()]
+
+    def load_force_plate_data(self: str, video_framerate = False) -> pd.DataFrame:
+        if not 'bout' in self.index.columns:
+            raise KeyError('specifiy bout in dataset index')
+        self.assert_is_single(None, "bout")
+        id = self.index['participant'][0].replace("_", "")
+        bout = self.index['bout'][0]
+        file_path = next(self.gait_data_path.joinpath(f"vicon/{id}").rglob(f"bout{bout}.mot"))
+
+        grf = pd.read_csv(file_path, index_col=None, delimiter='\t', skiprows=6)
+        columns = grf.columns
+        grf = grf.reset_index(inplace=False).iloc[:, :-1]
+        grf.columns = columns
+
+        time = grf.time
+        grf = self._filter_data(grf, 1000)
+        grf['time'] = time
+        grf.rename(columns=self.GRF_DICT, inplace=True)
+        if video_framerate:
+            return grf.set_index('time')[::20]
+
+        return grf.set_index('time')
+
+
+    def _filter_data(self, data, fs):
+        b, a = signal.butter(2, 10, fs=fs)
+        column_names = data.columns
+        filtered_data = signal.filtfilt(b, a, data, axis=0)
+        filtered_data = pd.DataFrame(filtered_data, columns=column_names)
+        filtered_data.index = data.index
+        return filtered_data
+
+
+    def load_keypoint_trajectories(self, model: object = 'rtmo') -> DataFrame:
+        """
+        the function computes the keypoint trajectories given of a single trial at 50Hz in the coordinate system where X is forward and Y is vertical.
+        currently, left sagital video data is used.
+        :param model: specify the pose estimation model to use
+        :return: a DataFrame containing the keypoint trajectories of one trial, rows are time points and columns are keypoint names
+        """
+        if not 'bout' in self.index.columns:
+            raise KeyError('specifiy bout in dataset index')
+        self.assert_is_single(None, "bout")
+        id = self.index['participant'][0].replace("_", "")
+        bout = self.index['bout'][0]
+        json_file = next(self.gait_data_path.joinpath(f"pred_{model}/{id}").rglob(f"bout{bout}_0.json"))
+
+        #load the json file
+
+        with open(json_file) as f:
+            d = json.load(f)  # d is a list that has every frame as a list entry
+        n_keypoints = len(self.MODEL_KEYPOINTS[f"{model}"]["forward"].keys())
+        traj = np.empty((len(d), n_keypoints * 2))
+
+        # iterate over all frames
+        for i, frame in enumerate(d):
+            try:
+                instance = frame['instances'][0]
+                frame_keypoints = instance['keypoints']
+
+                for n in range(n_keypoints):
+                    kp_name = self.MODEL_KEYPOINTS[f"{model}"]["forward"][str(n)]
+                    kp_values = frame_keypoints[self.MODEL_KEYPOINTS[f"{model}"]["inverse"][kp_name]]
+                    traj[i, n * 2:n * 2 + 2] = kp_values
+            except:
+                traj[i, :] = np.nan
+
+        traj = pd.DataFrame(traj)
+        column_names = []
+        for n in range(n_keypoints):
+            kp_name = self.MODEL_KEYPOINTS[f"{model}"]["forward"][str(n)]
+            column_names.extend([kp_name + '_x', kp_name + '_y'])
+
+        traj.columns = column_names
+        traj['time'] = traj.index / 50
+        traj.set_index('time', inplace=True)
+       # print(traj.isnull().values.any())
+
+        #interpolate missing NaNs
+        traj_interpolated = traj.interpolate(axis=0, limit=4)
+
+        #filter the trajectories
+        traj_filtered = self._filter_data(traj_interpolated, fs=50)
+
+        #convert the KOS
+        pixel = [460, 640]  # return breite * höhe
+       #assume we have the left side view
+        for i in traj_filtered.columns:
+            if '_x' in i:
+                traj_filtered.loc[:, i] = pixel[0] - traj_filtered.loc[:, i]
+            elif '_y' in i:
+                traj_filtered.loc[:, i] = pixel[1] - traj_filtered.loc[:, i]
+            else:
+                pass
+
+        return traj_filtered
+
+    @property
+    def gait_cycle_kinematics(self) -> pd.DataFrame:
+
+        if not 'bout' in self.index.columns:
+            raise KeyError('specifiy bout in dataset index')
+        self.assert_is_single(None, "bout")
+        id = self.index['participant'][0].replace("_", "")
+        bout = self.index['bout'][0]
+        return
+
+
+    @property
+    def confidence_scores(self) -> DataFrame:
+        """
+        function to compute the confidence score ranging between [0,1] of every keypoint estimation at every time point
+        :return: a pd Dataframe for a single bout, where every row is one timepoint (at 50Hz) and the columns are the keypoint names
+        """
+        raise KeyError('specifiy bout in dataset index')
+        self.assert_is_single(None, "bout")
+        id = self.index['participant'][0].replace("_", "")
+        bout = self.index['bout'][0]
+        json_file = next(self.gait_data_path.joinpath(f"pred_{model}/{id}").rglob(f"bout{bout}_0.json"))
+
+        # load the json file
+
+        with open(json_file) as f:
+            d = json.load(f)  # d is a list that has every frame as a list entry
+        n_keypoints = len(self.MODEL_KEYPOINTS[f"{model}"]["forward"].keys())
+        traj = np.empty((len(d), n_keypoints * 2))
+
+        # iterate over all frames
+        for i, frame in enumerate(d):
+            try:
+                instance = frame['instances'][0]
+                frame_keypoints = instance['keypoint_scores']
+
+                for n in range(n_keypoints):
+                    kp_name = self.MODEL_KEYPOINTS[f"{model}"]["forward"][str(n)]
+                    kp_values = frame_keypoints[self.MODEL_KEYPOINTS[f"{model}"]["inverse"][kp_name]]
+                    traj[i, n * 2:n * 2 + 2] = kp_values
+            except:
+                traj[i, :] = np.nan
+
+        traj = pd.DataFrame(traj)
+        column_names = []
+        for n in range(n_keypoints):
+            kp_name = sself.MODEL_KEYPOINTS[f"{model}"]["forward"][str(n)]
+            column_names.extend([kp_name + '_x', kp_name + '_y'])
+
+        traj.columns = column_names
+        traj['time'] = traj.index / 50
+        traj.set_index('time', inplace=True)
+
+
+        return traj
+
+    @property
+    def kinematics(self):
+        try:
+            kinematics = pd.read_csv(self.base_path.joinpath('kinematics/kinematics.csv'), index_col=0)
+            if 'bout' in kinematics.columns:
+                kinematics['bout'] = kinematics['bout'].astype(str)
+        except:
+            raise FileNotFoundError('kinematics.pkl not found, please run the file "Gait_kinematics.py" first')
+
+        subset = self.index
+        flat_kinematics = kinematics.reset_index()
+        filtered_kinematics = flat_kinematics.merge(subset, on=subset.columns.tolist(), how='inner')
+        return filtered_kinematics.set_index(['participant', 'condition', 'bout', 'speed', 'cycle_idx', 'percentage_of_stride'])
+
+    @property
+    def stride_times(self):
+        try:
+            stride_times = pd.read_csv(self.base_path.joinpath('kinematics/stride_times.csv'), index_col=0)
+            if 'bout' in stride_times.columns:
+                stride_times['bout'] = stride_times['bout'].astype(str)
+        except:
+            raise FileNotFoundError('stride_times.csv not found, please run the file "Gait_spatiotemporal_features.py" first')
+
+        subset = self.index
+        flat_kinematics = stride_times.reset_index()
+        filtered_stride_times = flat_kinematics.merge(subset, on=subset.columns.tolist(), how='inner')
+        return filtered_stride_times.set_index(
+            ['participant', 'condition', 'bout', 'speed', 'stride_idx'])
