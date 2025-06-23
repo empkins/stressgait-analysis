@@ -19,7 +19,7 @@ class StressGaitDataset(Dataset):
         "VP_21",
     ]
 
-    PARTICIPANTS_NO_SALIVA: ClassVar[Sequence[str]] = ["VP_04", "VP_48"]
+    PARTICIPANTS_NO_SALIVA: ClassVar[Sequence[str]] = ["VP_01", "VP_48"]
 
     PARTICIPANTS_HIGH_S0_CORTISOL: ClassVar[Sequence[str]] = ["VP_39"]
 
@@ -56,7 +56,6 @@ class StressGaitDataset(Dataset):
         exclude_missing_data: bool = True,
         specify_bouts: bool = False,
         use_cache: bool = True,
-        gait_data_path = None,
         specify_speed = False
     ) -> None:
         self.base_path = base_path
@@ -65,7 +64,6 @@ class StressGaitDataset(Dataset):
         self.use_cache = use_cache
         self.specify_bouts = specify_bouts
         self.specify_speed = specify_speed
-        self.gait_data_path = gait_data_path
         super().__init__(groupby_cols=groupby_cols, subset_index=subset_index)
 
     def create_index(self) -> pd.DataFrame:
@@ -194,7 +192,7 @@ class StressGaitDataset(Dataset):
         self.assert_is_single(None, "bout")
         id = self.index['participant'][0].replace("_", "")
         bout = self.index['bout'][0]
-        file_path = next(self.gait_data_path.joinpath(f"vicon/{id}").rglob(f"bout{bout}.mot"))
+        file_path = next(self.base_path.joinpath(f"gait_GRFs/{id}").rglob(f"bout{bout}.mot"))
 
         grf = pd.read_csv(file_path, index_col=None, delimiter='\t', skiprows=6)
         columns = grf.columns
@@ -232,7 +230,7 @@ class StressGaitDataset(Dataset):
         self.assert_is_single(None, "bout")
         id = self.index['participant'][0].replace("_", "")
         bout = self.index['bout'][0]
-        json_file = next(self.gait_data_path.joinpath(f"pred_{model}/{id}").rglob(f"bout{bout}_0.json"))
+        json_file = next(self.base_path.joinpath(f"gait_pose_estimation/{id}").rglob(f"bout{bout}_0.json"))
 
         #load the json file
 
@@ -305,7 +303,7 @@ class StressGaitDataset(Dataset):
         self.assert_is_single(None, "bout")
         id = self.index['participant'][0].replace("_", "")
         bout = self.index['bout'][0]
-        json_file = next(self.gait_data_path.joinpath(f"pred_{model}/{id}").rglob(f"bout{bout}_0.json"))
+        json_file = next(self.base_path.joinpath(f"gait_pose_estimation/{id}").rglob(f"bout{bout}_0.json"))
 
         # load the json file
 
